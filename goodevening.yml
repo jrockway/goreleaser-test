@@ -1,0 +1,89 @@
+project_name: pachctl
+
+dist: /tmp/pachyderm/release/pachctl
+
+before:
+    hooks:
+        - go mod download
+        - go generate ./...
+
+builds:
+    - id: goodevening
+      dir: cmd/goodevening
+      main: main.go
+      binary: goodevening
+      ldflags:
+          - -X {{ .Env.LD_FLAGS }} -X main.commit={{.Commit}} -X main.date={{.Date}} -X
+            main.builtBy=goreleaser
+      gcflags:
+          - all=-trimpath={{ .Env.PWD }}
+      env:
+          - CGO_ENABLED=0
+      goos:
+          - linux
+          - darwin
+      goarch:
+          - amd64
+
+archives:
+    - id: goodevening-archives
+      builds:
+          - goodevening
+      format_overrides:
+          - goos: darwin
+            format: zip
+      wrap_in_directory: true
+      files:
+          - goodevening*/goodevening
+
+checksum:
+    disable: true
+
+snapshot:
+    name_template: "{{ .Env.VERSION }}"
+
+changelog:
+    skip: false
+
+nfpms:
+    - id: goodevening-deb
+      package_name: goodevening
+      file_name_template: "{{ .ProjectName }}_{{ .Env.VERSION }}_{{ .Arch }}"
+      builds:
+          - goodevening
+      replacements:
+          linux: ""
+          amd64: amd64
+      vendor: Pachyderm
+      homepage: https://example.com/
+      maintainer: noreply@example.com
+      description: "This is only a test."
+      formats:
+          - deb
+      bindir: /usr/bin
+
+release:
+    name_template: "{{ .Env.VERSION }}"
+    prerelease: auto
+    disable: false
+
+brews:
+    - name: goodevening@{{.Major}}.{{.Minor}}
+      ids:
+          - goodevening-archives
+      homepage: "https://example.com/"
+      description: "This is only a test."
+      tap:
+          owner: example
+          name: homebrew-tap
+      url_template:
+          "https://github.com/pachyderm/pachyderm/releases/download/v{{ .Env.VERSION
+          }}/{{.ArtifactName }}"
+      commit_author:
+          name: pachyderm
+          email: nitin@pachyderm.com
+      test: |
+          system "#{bin}/goodevening"
+      install: |
+          bin.install buildpath/goodevening
+      skip_upload: true
