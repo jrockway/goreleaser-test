@@ -1,7 +1,5 @@
 project_name: pachctl
 
-dist: /tmp/pachyderm/release/pachctl
-
 before:
     hooks:
         - go mod download
@@ -9,14 +7,14 @@ before:
 
 builds:
     - id: goodevening
-      dir: cmd/goodevening
-      main: main.go
+      dir: .
+      main: cmd/goodevening/main.go
       binary: goodevening
       ldflags:
-          - -X {{ .Env.LD_FLAGS }} -X main.commit={{.Commit}} -X main.date={{.Date}} -X
+          - -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}} -X
             main.builtBy=goreleaser
       gcflags:
-          - all=-trimpath={{ .Env.PWD }}
+          - all=-trimpath={{.Env.PWD}}
       env:
           - CGO_ENABLED=0
       goos:
@@ -40,7 +38,7 @@ checksum:
     disable: true
 
 snapshot:
-    name_template: "{{ .Env.VERSION }}"
+    name_template: "{{ .Version }}"
 
 changelog:
     skip: false
@@ -48,7 +46,7 @@ changelog:
 nfpms:
     - id: goodevening-deb
       package_name: goodevening
-      file_name_template: "{{ .ProjectName }}_{{ .Env.VERSION }}_{{ .Arch }}"
+      file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Arch }}"
       builds:
           - goodevening
       replacements:
@@ -63,7 +61,7 @@ nfpms:
       bindir: /usr/bin
 
 release:
-    name_template: "{{ .Env.VERSION }}"
+    name_template: "{{ .Version }}"
     prerelease: auto
     disable: false
 
@@ -76,9 +74,7 @@ brews:
       tap:
           owner: example
           name: homebrew-tap
-      url_template:
-          "https://github.com/pachyderm/pachyderm/releases/download/v{{ .Env.VERSION
-          }}/{{.ArtifactName }}"
+      url_template: "https://example.com/x/y/releases/download/v{{ .Version }}/{{.ArtifactName }}"
       commit_author:
           name: pachyderm
           email: nitin@pachyderm.com
@@ -87,3 +83,9 @@ brews:
       install: |
           bin.install buildpath/goodevening
       skip_upload: true
+
+dockers:
+    - image_templates:
+          - "jrockway/goodevening:v{{.Version}}"
+      skip_push: true
+      dockerfile: Dockerfile
