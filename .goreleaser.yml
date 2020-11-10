@@ -1,4 +1,4 @@
-project_name: pachctl
+project_name: goreleaser-test
 
 before:
     hooks:
